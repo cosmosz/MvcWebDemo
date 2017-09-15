@@ -1,0 +1,70 @@
+﻿@model List<MVCShopping.Models.Cart>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+@{
+    var ajaxOption = new AjaxOptions()
+    {
+        OnSuccess = "RemoveCartSuccess",
+        OnFailure = "RemoveCartFailure",
+        Confirm = "确定要从购物车删除这个商品吗？",
+        HttpMethod = "Post"
+    };
+}
+
+@section scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        function RemoveCartSuccess() {
+            alert("移除购物车项目成功");
+        }
+        function RemoveCartFailure(xhr) {
+            alert("移除购物车项目失败（Http状态代码：" + xhr.status + ")");
+        }
+    </script>
+}
+<h2>购物车列表</h2>
+@using (Html.BeginForm("UpdateAmount", "Cart"))
+{
+    <table>
+        <tr>
+            <th>产品名称</th>
+            <th>单价</th>
+            <th>数量</th>
+            <th>小计</th>
+            <th></th>
+        </tr>
+        @{ int subTotal = 0; }
+        @foreach (var item in Model)
+        {
+            subTotal += item.Product.Price * item.Amount;
+
+            var ddlAmountList = new SelectList(Enumerable.Range(1,10),item.Amount);
+
+            @Html.HiddenFor(model => item.Product.Id)
+
+            <tr>
+                <td>@Html.DisplayFor(model => item.Product.Name)</td>
+                <td>NT$ @item.Product.Price</td>
+                <td>@Html.DropDownListFor(model => item.Amount,ddlAmountList)</td>
+                <td>NT$ @(item.Product.Price * item.Amount)</td>
+                <td>@Ajax.ActionLink("删除","Remove",new { ProductId = item.Product.Id }, ajaxOption)</td>
+            </tr>
+        }
+        
+        <tr>
+            <th></th>
+            <th></th>
+            <th>总价</th>
+            <th id="subtotal">NT$ @subTotal</th>
+            <th></th>
+        </tr>
+    </table>
+
+    <p>
+        <input type="submit" value="更新数量"/>
+        <input type="button" value="完成订单" onclick="location.href = '@Url.Action("Complete","Order")';" />
+    </p>
+}
